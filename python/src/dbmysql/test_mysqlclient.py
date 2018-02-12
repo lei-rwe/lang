@@ -4,18 +4,25 @@
 
 import unittest
 import _mysql
+from pip._vendor.distlib import database
 
 class ConnectToMySql(unittest.TestCase):
 
     def setUp(self):
         pass
 
-    def connect(self):
+    def test_connect(self):
         hostname = 'localhost'
-        username = 'USERNAME'
-        password = 'PASSWORD'
-        database = 'DBNAME'
+        database = 'ztech'
+        username = ''
+        password = ''
 
+        conn = _mysql.connect(host=hostname, db=database, user=username,
+                  passwd=password)
+        conn.query('select * from department')
+        rs = conn.store_result().fetch_row(how=1, maxrows=0)
+        print(rs)
+        conn.close()
         self.assertTrue(True)
 
 if __name__=="__main__":
