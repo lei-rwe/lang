@@ -1,3 +1,5 @@
+# File person.py
+# Add customization of constructor in a subclass
 class Person:
     def __init__(self, name, job=None, pay=0):
         self.name = name
@@ -11,19 +13,28 @@ class Person:
         return '[Person: %s, %s]' % (self.name, self.pay)
 
 class Manager(Person):
-    def giveRaise(self, percent, bonus=.10): # Redefine at this level
-        # Person.giveRaise(self, percent + bonus) # Call Person's version
-        super().giveRaise(percent + bonus) # Call Person's version
+    def __init__(self, name, pay): # Redefine constructor
+        Person.__init__(self, name, 'mgr', pay) # Run original with 'mgr'
+    def giveRaise(self, percent, bonus=.10):
+        Person.giveRaise(self, percent + bonus)
+
+class Department:
+    def __init__(self, *args):
+        self.members = list(args)
+    def addMember(self, person):
+        self.members.append(person)
+    def giveRaises(self, percent):
+        for person in self.members:
+            person.giveRaise(percent)
+    def showAll(self):
+        for person in self.members:
+            print(person)
 
 if __name__ == '__main__':
     bob = Person('Bob Smith')
     sue = Person('Sue Jones', job='dev', pay=100000)
-    print(bob)
-    print(sue)
-    print(bob.lastName(), sue.lastName())
-    sue.giveRaise(.10)
-    print(sue)
-    tom = Manager('Tom Jones', 'mgr', 50000) # Make a Manager: __init__
-    tom.giveRaise(.10) # Runs custom version
-    print(tom.lastName()) # Runs inherited method
-    print(tom) # Runs inherited __repr__
+    tom = Manager('Tom Jones', 50000)
+    development = Department(bob, sue) # Embed objects in a composite
+    development.addMember(tom)
+    development.giveRaises(.10) # Runs embedded objects' giveRaise
+    development.showAll() # Runs embedded objects' __repr__
