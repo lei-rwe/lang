@@ -27,6 +27,8 @@ class Base:
 # How to intersect the class construction process?
 # Method 1: use __build_class__
 # Method 2: use metaclass, see ep_meta.py
+# Method 3: use __init_subclass__, see ep_is.py
+
 def for_dis():
     class MyBase:
         pass
