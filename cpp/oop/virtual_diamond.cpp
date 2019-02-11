@@ -48,6 +48,10 @@ public:
 
 int main(){
     cout << "==============" << endl;
+    Der1 d1;
+    cout << "==============" << endl;
+    VDer1 vd1;
+    cout << "==============" << endl;
     Join_1 j1;
     cout << "==============" << endl;
     Join_2 j2;

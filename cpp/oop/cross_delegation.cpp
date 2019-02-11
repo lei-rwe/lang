@@ -18,6 +18,7 @@ public:
 class Der1: public virtual Base {
 public:
     void foo(){ bar(); }
+    void bar(){ cout << "Der1::bar" << endl;}
 };
 
 class Der2: public virtual Base {
