@@ -14,8 +14,12 @@ void dfsUtil(int node, int count, bool visited[],
                    int& maxCount, list<int>* adj)
 {
     visited[node] = true;
+    cout << "Marking node [" << node << "] as visited" << endl;
+
     count++;
     for (auto i = adj[node].begin(); i != adj[node].end(); ++i) {
+    	cout << "  Checking adj node [" << *i
+    		 << "], visited flag=" << visited[*i] << endl;
         if (!visited[*i]) {
             if (count >= maxCount) {
                 maxCount = count;
@@ -26,8 +30,7 @@ void dfsUtil(int node, int count, bool visited[],
     }
 }
 
-// The function to do DFS traversal. It uses recursive
-// dfsUtil()
+// The function to do DFS traversal. It uses recursive dfsUtil()
 void dfs(int node, int n, list<int>* adj, int& maxCount)
 {
     bool visited[n + 1];
@@ -83,7 +86,7 @@ int main()
 
 
     /* maxCount will have diameter of tree */
-    cout << "Diameter of the given tree is "
-        << diameter(adj, n) << endl;
+    int d = diameter(adj, n);
+    cout << "Diameter of the given tree is " << d << endl;
     return 0;
 }
