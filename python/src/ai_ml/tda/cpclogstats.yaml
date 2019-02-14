@@ -1,0 +1,63 @@
+reports:
+    daily_perf:
+        files: performance(?P<year>\d{4})-(?P<month>\d{2})-(?P<date>\d{2}).(?P<serial>\d{2}).log
+        example:
+            - '[03/Dec/2018:16:02:57 -0600] HTTP/1.1 GET /cpc-v0/cpc/accounts/111007225/communication-preferences 500  - 2096135 ms - - - tomcat-http--257 - 10.238.21.72'
+            - '[03/Dec/2018:16:03:57 -0600] HTTP/1.1 GET /cpc-v0/cpc/accounts/873000222/communication-preferences 500 ?communicationtype=TAX%20DOCUMENTS - 2156203 ms - - - tomcat-http--411 - 10.238.18.31'
+        pattern: \[(\S*) \S*\] [^ ]* (\S*) \S*/(\S*) (\d*)[^\d]*(\d*) ms.*- ([\d\.]*)
+        fields: timestamp method url httpcode timeused ip
+        timestamp: timestamp
+        timeformat: '%d/%b/%Y:%H:%M:%S'
+        report:
+            interval: 60
+            value: timeused
+            group_by:
+                - all
+                - method
+                - url
+                - httpcode
+                - method+url
+
+    performance:
+        files: performance-(?P<month>\d{2})-(?P<date>\d{2})-(?P<year>\d{4})-(?P<serial>\d+).log
+        file_default: performance.log
+        file_example: performance-12-03-2018-1.log
+        example:
+            - '2018-12-03T23:18:30,035 [INFO ] [endpoint-performance] - [tomcat-http--283] [500_endpoint 1262190 ms]'
+            - '2018-12-03T23:19:30,080 [INFO ] [endpoint-performance] - [tomcat-http--228] [500_endpoint 1322018 ms]'
+
+
+    service:
+        files: service-(?P<month>\d{2})-(?P<date>\d{2})-(?P<year>\d{4})-(?P<serial>\d+).log
+        file_default: performance.log
+        file_example: service-12-03-2018-1.log
+        example:
+            - '2018-12-03 09:57:12.388 [tomcat-http--17]  INFO endpoint - Request: user=WEBSYS method=GET URI=http://ste01lvcpcapp01.iteclientsys.local:8080/cpc-v0/cpc/accounts/494219463/communication-preferences'
+            - '2018-12-03 10:37:02.563 [tomcat-http--43]  INFO endpoint - Request: user=CACISYS method=GET URI=http://ste01lvcpcapp01.iteclientsys.local:8080/cpc-v0/cpc/accounts/114023443/contact-points'
+            - '2018-12-03 10:37:02.568 [tomcat-http--3]  INFO endpoint - Request: user=CACISYS method=GET URI=http://ste01lvcpcapp01.iteclientsys.local:8080/cpc-v0/cpc/accounts/909000550/communication-preferences?communicationtype=TAX%20DOCUMENTS'
+            - '2018-12-03 10:37:02.569 [tomcat-http--29]  INFO endpoint - Request: user=CACISYS method=GET URI=http://ste01lvcpcapp01.iteclientsys.local:8080/cpc-v0/cpc/accounts/909000550/contact-points'
+            - '2018-12-03 10:36:49.155 [tomcat-http--28]  WARN com.tdameri.service.cpc.webserv.RestEndpoint - CPCMON GET-CONTACT: authID=A000000029527550, level=, namespace=AMRH.SYSTEM, principal=CACISYS, segment=AMRH, info='
+            - '2018-12-03 10:36:49.160 [tomcat-http--5]  WARN com.tdameri.service.cpc.webserv.RestEndpoint - CPCMON GET-CONTACT: authID=A000000029527550, level=, namespace=AMRH.SYSTEM, principal=CACISYS, segment=AMRH, info='
+            - '2018-12-03 18:36:05.743 [tomcat-http--224] ERROR org.springf.boot.context.web.ErrorPageFilter - Cannot forward to error page for request [/cpc/accounts/872000583/communication-preferences]'
+        pattern: '(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}).*INFO endpoint - Request: user=(\S*) method=(\S*).*/(.*)'
+        fields: timestamp user method url
+        timestamp: timestamp
+        timeformat: '%Y-%m-%d %H:%M:%S'
+        report:
+            interval: 60
+            group_by:
+                - all
+                - user
+                - method
+                - url
+                - method+url
+
+    catalina_log:
+        files: catalina-(?P<year>\d{2})-(?P<month>\d{2})-(?P<date>\d{2}).log
+        file_example: catalina.2018-12-04.log
+
+    catalina_out:
+        files: catalina-(?P<year>\d{2})-(?P<month>\d{2})-(?P<date>\d{2}).out
+        file_default: catalina.out
+        file_example: catalina-18-12-03.out
+
