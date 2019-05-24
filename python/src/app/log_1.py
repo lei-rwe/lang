@@ -5,11 +5,11 @@ class Main(object):
 
     @staticmethod
     def main():
-        mylogger.debug("1")
-        mylogger.info("2")
-        mylogger.warn("3")
-        mylogger.error("4")
-        mylogger.critical("5")
+        mylogger.debug("my debug log")
+        mylogger.info("my info log")
+        mylogger.warning("my warning log")
+        mylogger.error("my error log")
+        mylogger.critical("my critical log")
 
 if __name__ == "__main__":
     print(os.getcwd())
