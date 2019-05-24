@@ -5,7 +5,7 @@ def print_directory(dir):
         if os.path.isdir(path):
             print_directory(path)
         else:
-            print path
+            print(path)
 
 
 def test_list_comp():
@@ -17,13 +17,13 @@ def test_list_comp():
     A5 = {i:i*i for i in A1}
     A6 = [[i,i*i] for i in A1]
 
-    print A0
-    print A1
-    print A2
-    print A3
-    print A4
-    print A5
-    print A6
+    print(A0)
+    print(A1)
+    print(A2)
+    print(A3)
+    print(A4)
+    print(A5)
+    print(A6)
 
 def test_default_args():
     def f(x,l=[]):
@@ -93,9 +93,9 @@ def test_args():
 
 def test_overloading():
     def f(b):
-        print "Only one argument: ", b
+        print("Only one argument: ", b)
     def f(a, b=3, c=1):
-        print "three arguments: ", a, b, c
+        print("three arguments: ", a, b, c)
 
     f(5)
     f(4, 3)
@@ -107,7 +107,7 @@ def frange(start, stop, step):
         i += step
 
 def test_frange():
-    print [i for i in frange(0.5, 1.0, 0.1)]
+    print([i for i in frange(0.5, 1.0, 0.1)])
 
 if __name__ == "__main__":
     # import sys
