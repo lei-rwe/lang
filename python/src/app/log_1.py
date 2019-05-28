@@ -12,5 +12,4 @@ class Main(object):
         mylogger.critical("my critical log")
 
 if __name__ == "__main__":
-    print(os.getcwd())
     Main.main()
