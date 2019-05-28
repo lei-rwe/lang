@@ -6,22 +6,6 @@ from logging import FileHandler
 print('zwidgets:', os.getcwd())
 print('zwidgets:', __file__)
 
-def _setup_running_env():
-    cwd = os.getcwd()
-
-    # Go up two levels as the base
-    logdir = os.path.dirname(os.path.dirname(cwd))
-    log_1 = os.path.join(logdir, 'log')
-    log_2 = os.path.join(logdir, 'logs')
-    if os.path.isdir(log_1):
-        logdir = log_1
-    elif os.path.isdir(log_2):
-        logdir = log_2
-    print(logdir)
-
-    if 'ZLOGDIR' not in os.environ:
-        os.environ['ZLOGDIR'] = logdir
-
 def _make_logger():
     # Assume the configure file is at the same level of this file
     full_path = os.path.realpath(__file__)
@@ -38,5 +22,4 @@ def _make_logger():
 
     return logger
 
-_setup_running_env()
 mylogger = _make_logger()
