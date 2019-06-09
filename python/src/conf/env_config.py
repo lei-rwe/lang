@@ -64,7 +64,6 @@ def configure_logging(log_conf_file=None, log_conf_dir=None):
         if isinstance(handler, logging.FileHandler):
             print('Logging to file {}'.format(handler.baseFilename))
 
-
 def env_config(token, cmdargs=None) -> Dict[str, Union[str, int, List[int], List[str]]]:
     print(f'Loading configure for environment {token} ...')
 
@@ -100,10 +99,13 @@ def env_config(token, cmdargs=None) -> Dict[str, Union[str, int, List[int], List
     configure_logging(E['project.log.conf_file'],
                       os.path.join(E['project.home'], E['project.log.conf_dir']))
 
-
     return E
 
 
 if '__main__' == __name__:
     from pprint import pprint
     pprint(env_config('STAGE'))
+    logging.info('info')
+    logging.debug('debug')
+    logging.warning('warning')
+    logging.error('error', exc_info=True)
