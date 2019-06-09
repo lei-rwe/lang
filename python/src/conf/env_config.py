@@ -37,6 +37,15 @@ def _flatten_cfg(cfg: Dict[str, Any]) -> Dict[str, Union[str, int, List[int], Li
                 yield (key, value)
     return dict(_items())
 
+# Requirement:
+#   . Logging to the same log file based on the starting program
+#   . Just ONE logging.ini file
+#   . Be able to choose which logger to use
+#   . Only starting file need to configure logging
+# To use, need only do:
+#   import logging
+#       ... ...
+#   logging.....
 def configure_logging(log_conf_file=None, log_conf_dir=None):
     # Since logging is global, need ONLY to configure it
     if not log_conf_dir:
@@ -105,6 +114,9 @@ def env_config(token, cmdargs=None) -> Dict[str, Union[str, int, List[int], List
 
 if '__main__' == __name__:
     from pprint import pprint
+
+    # This is how to change the log configure file, through the
+    # env_config command line arguments
     E = env_config('STAGE', {'project.log.conf_file': 'test_logging.ini'})
     pprint(E)
 
