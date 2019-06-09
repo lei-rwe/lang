@@ -70,9 +70,10 @@ def env_config(token, cmdargs=None) -> Dict[str, Union[str, int, List[int], List
     if not cmdargs:
         E = _flatten_cfg(CONFIG_ENV[token])
     else:
-        argdict = { key : value for key, value in vars(cmdargs).items() if value }
+        if not isinstance(cmdargs, dict):
+            cmdargs = { key : value for key, value in vars(cmdargs).items() if value }
         E = _flatten_cfg(CONFIG_ENV[token])
-        E.update(argdict)
+        E.update(cmdargs)
 
     def _check_environment_variables(E):
         print('env_config.py: checking environment variables ...')
@@ -104,8 +105,10 @@ def env_config(token, cmdargs=None) -> Dict[str, Union[str, int, List[int], List
 
 if '__main__' == __name__:
     from pprint import pprint
-    pprint(env_config('STAGE'))
-    logging.info('info')
+    E = env_config('STAGE', {'project.log.conf_file': 'test_logging.ini'})
+    pprint(E)
+
     logging.debug('debug')
+    logging.info('info')
     logging.warning('warning')
     logging.error('error', exc_info=True)
