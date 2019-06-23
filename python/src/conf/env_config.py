@@ -2,6 +2,8 @@ import os
 import logging.config
 from typing import Any, Dict, List, Union
 
+E = None
+
 CONFIG_ENV = {
     'STAGE': {
         'project': {
@@ -58,10 +60,6 @@ def configure_logging(log_conf_file=None, log_conf_dir=None):
 
 
 def env_config(token, cmdargs=None, other_settings=None) -> Dict[str, Union[str, int, List[int], List[str]]]:
-    global E
-
-    print(f'Loading configure for environment {token} ...')
-
     def _flatten_cfg(cfg: Dict[str, Any]) -> Dict[str, Union[str, int, List[int], List[str]]]:
         '''
         reduce a multi level dict to a single level dict; concat keys to value(s)
@@ -100,6 +98,9 @@ def env_config(token, cmdargs=None, other_settings=None) -> Dict[str, Union[str,
             if not os.path.isdir(folder):
                 os.makedirs(folder)
 
+    print(f'Loading configure for environment {token} ...')
+
+    global E
     E = _flatten_cfg(CONFIG_ENV[token])
     if cmdargs:
         if not isinstance(cmdargs, dict):
