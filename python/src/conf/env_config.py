@@ -5,19 +5,15 @@ from typing import Any, Dict, List, Union
 E = None
 
 CONFIG_ENV = {
-    'STAGE': {
-        'project': {
-            'name': 'zprj',
-            'home': os.path.join(os.path.expanduser('~'), 'git', 'lang', 'python'),
-            'log': {
-                'conf_dir': 'conf',
-                'conf_file': 'logging.ini'   # default log configure file. typically project_name + '_log.ini'
-            },
-            'required_directories': ['conf', 'data', 'logs'],
-            'env_variables': {
-                'PRJ_HOME': 'project.home'
-            }
-        },
+    'name': 'zprj',
+    'home': os.path.join(os.path.expanduser('~'), 'git', 'lang', 'python'),
+    'log': {
+        'conf_dir': 'conf',
+        'conf_file': 'logging.ini'   # default log configure file. typically project_name + '_log.ini'
+    },
+    'required_directories': ['conf', 'data', 'logs'],
+    'env_variables': {
+        'ZPRJ_HOME': 'home'
     }
 }
 
@@ -59,7 +55,7 @@ def configure_logging(log_conf_file=None, log_conf_dir=None):
             print('Logging to file {}'.format(handler.baseFilename))
 
 
-def env_config(token, cmdargs=None, other_settings=None) -> Dict[str, Union[str, int, List[int], List[str]]]:
+def env_config(cmdargs=None, other_settings=None) -> Dict[str, Union[str, int, List[int], List[str]]]:
     def _flatten_cfg(cfg: Dict[str, Any]) -> Dict[str, Union[str, int, List[int], List[str]]]:
         '''
         reduce a multi level dict to a single level dict; concat keys to value(s)
@@ -81,27 +77,27 @@ def env_config(token, cmdargs=None, other_settings=None) -> Dict[str, Union[str,
 
     def _check_environment_variables(E):
         print('env_config.py: checking environment variables ...')
-        env_startswith = 'project.env_variables.'
+        env_startswith = 'env_variables.'
         for key, value in E.items():
             if key.startswith(env_startswith):
                 var = key[len(env_startswith):]
                 if var not in os.environ:
                     os.environ[var] = E[value]
-                    print(f'Set environment variable {var}')
+                    print(f'Set environment variable {var} to {E[value]}')
 
     def _check_folders(E):
         logging.info('Checking folder layout ...')
-        base_dir = E['project.home']
-        for s_folder in E.get('project.required_directories', {}):
+        base_dir = E['home']
+        for s_folder in E.get('required_directories', {}):
             folder = os.path.join(base_dir, s_folder)
             logging.info(f'Checking folder {folder} ...')
             if not os.path.isdir(folder):
                 os.makedirs(folder)
 
-    print(f'Loading configure for environment {token} ...')
+    print('Loading configuration ...')
 
     global E
-    E = _flatten_cfg(CONFIG_ENV[token])
+    E = _flatten_cfg(CONFIG_ENV)
     if cmdargs:
         if not isinstance(cmdargs, dict):
             cmdargs = {key: value for key, value in vars(cmdargs).items() if value}
@@ -110,10 +106,10 @@ def env_config(token, cmdargs=None, other_settings=None) -> Dict[str, Union[str,
         E.update(other_settings)
 
     _check_environment_variables(E)
-    configure_logging(E['project.log.conf_file'],
-                      os.path.join(E['project.home'], E['project.log.conf_dir']))
+    configure_logging(E['log.conf_file'], os.path.join(E['home'], E['log.conf_dir']))
     _check_folders(E)
 
+    logging.info(E)
     return E
 
 
@@ -122,7 +118,8 @@ if '__main__' == __name__:
 
     # This is how to change the log configure file, through the
     # env_config command line arguments
-    E = env_config('STAGE', other_settings={'project.log.conf_file': 'test_logging.ini'})
+    # E = env_config(other_settings={'log.conf_file': 'test_logging.ini'})
+    E = env_config()
     pprint(E)
 
     logging.debug('debug')
