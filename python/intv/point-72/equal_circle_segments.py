@@ -9,25 +9,26 @@ This comes to check each solution of x_1 + ... + x_n = m
 '''
 
 
-N = 3
-s = [None] * N
-
-def solve_sum(m, S):
+def solve_sum(N, S):
     '''
     List all solutions of N positive numbers which sum to S
     :param N: N numbers
     :param S: Sum to S
     :return: The list of all solutions
     '''
-    if m <= 1:
+    if N <= 1:
         print(S)
-        return
+        return [[S]]
 
-    for i in range(S-m+1):
+    T = []
+    for i in range(S-N+1):
         print(i+1)
-        solve_sum(m-1, S-i-1)
+        A = solve_sum(N-1, S-i-1)
+        T.extend([[i+1]+a for a in A])
+
+    return T
 
 
 if __name__ == "__main__":
-    m = N
-    solve_sum(m, 5)
+    A = solve_sum(3, 5)
+    print(A)
