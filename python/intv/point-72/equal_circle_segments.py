@@ -17,12 +17,10 @@ def solve_sum(N, S):
     :return: The list of all solutions
     '''
     if N <= 1:
-        print(S)
         return [[S]]
 
     T = []
     for i in range(S-N+1):
-        print(i+1)
         A = solve_sum(N-1, S-i-1)
         T.extend([[i+1]+a for a in A])
 
@@ -32,3 +30,13 @@ def solve_sum(N, S):
 if __name__ == "__main__":
     A = solve_sum(3, 5)
     print(A)
+
+    from itertools import combinations
+    B = list(combinations('1234', 2))
+
+    # Note A and B are 1-1 corresponding, in the following way:
+    # Imagine that we list 5 objects in a line, and mark the spaces
+    # between them 1, 2, 3, 4. Then each solution of the combinations
+    # will divide the objects into three parts. For example, [1,2]
+    # divides the 5 objects to [1, 1, 3]
+
