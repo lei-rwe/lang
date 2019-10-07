@@ -12,7 +12,7 @@ This program is to find all the solutions
 '''
 
 
-def sum_from_combinations(n, s):
+def int_solutions(n, s):
     '''
     Find all the n-numbers which add to sum s
     Each combination gives a solution of the corresponding equation.
@@ -29,7 +29,19 @@ def sum_from_combinations(n, s):
     Y = [[0] + list(x) + [s] for x in combinations(range(1, s), n-1)]
     V = [[y[i + 1] - y[i] for i in range(len(y) - 1)] for y in Y]
     print(f'There are {len(V)} solutions to add {n} numbers to sum {s}, which are:\n{V}')
+    return V
+
+
+# Below is the generator version
+def gen_int_solutions(n, s):
+    for x in combinations(range(1, s), n-1):
+        y = [0] + list(x) + [s]
+        yield [y[i + 1] - y[i] for i in range(len(y) - 1)]
 
 
 if __name__ == "__main__":
-    sum_from_combinations(2, 6)
+    n = 3
+    s = 6
+    int_solutions(n, s)
+    Answer = [x for x in gen_int_solutions(n, s)]
+    print(Answer)
