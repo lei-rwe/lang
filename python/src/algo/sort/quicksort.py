@@ -19,32 +19,41 @@ class TestQsort(unittest.TestCase):
         partition(A, 0, len(A)-1)
         print("After partition, array: ", A)
 
-    def _test_partition_2(self):
+    def test_partition_2(self):
         A = list(range(1, 9))
         random.shuffle(A)
         print("\nOriginal array: ", A)
         partition(A, 0, len(A)-1)
         print("After partition, array: ", A)
 
-    def _test_qs_1(self):
+    def test_qs_1(self):
         A = [2, 8, 7, 1, 3, 5, 6, 4]
         print("\nOriginal array: ", A)
         qsort(A, 0, len(A)-1)
         print("After qsort, array: ", A)
 
+    def test_qs_2(self):
+        N = 10000
+        A = list(range(N))
+        random.shuffle(A)
+        # print("\nOriginal array: ", A)
+        qsort(A, 0, len(A)-1)
+        # print("After qsort, array: ", A)
+        for i in range(N):
+            assert A[i] == i
+
 
 def partition(A, p, r):
     # This partition is from the book "Introduction to Algorithm - 3rd Edition p192"
     pivot = A[r]
-    print("Using the last element {} as pivot to partition A[{}, {}] for array ".format(pivot, p, r), A)
+    # print("Using the last element {} as pivot to partition A[{}, {}] for array ".format(pivot, p, r), A)
 
     i = p - 1
     for j in range(p, r):
         if A[j] <= pivot:
             i = i + 1
-            if i != j:
-                A[i], A[j] = A[j], A[i]
-                print("Found a smaller one {} at index {}, after exchange {} and {}: ".format(A[j], j, i, j), A)
+            A[i], A[j] = A[j], A[i]
+            # print("Found a smaller one {} at index {}, after exchange {} and {}: ".format(A[j], j, i, j), A)
 
     A[i+1], A[r] = A[r], A[i+1]
     return i + 1
