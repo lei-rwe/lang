@@ -1,9 +1,12 @@
-# From https://www.youtube.com/watch?v=oLtvUWpAnTQ
+# From
+# https://www.youtube.com/watch?v=oLtvUWpAnTQ
+# https://www.youtube.com/watch?v=bD8RT0ub--0&t=883s
 
 
 def bfs(graph, s):
     queue = [s]
     seen = set(s)
+    parent = {s: None}  # To memorize the tree
     while len(queue) > 0:
         v = queue.pop(0)
         adjacents = graph[v]
@@ -11,7 +14,8 @@ def bfs(graph, s):
             if w not in seen:
                 queue.append(w)
                 seen.add(w)
-        print(v)
+                parent[w] = v
+    print(parent)
 
 
 def dfs(graph, s):
