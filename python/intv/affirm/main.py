@@ -28,7 +28,6 @@ class Bank:
                     pass
                 else:
                     bank = Bank(row[0], row[1])
-                    print(bank)
                     banks[row[0]] = bank
                 count += 1
         return banks
@@ -38,15 +37,40 @@ class Facility:
     def __init__(self, id, bank_id, ir, capacity):
         self.id = id
         self.bank_id = bank_id
-        self.ir = ir
-        self.cap = capacity
+        self.ir = float(ir)
+        self.max_capacity = float(capacity)
         self.covenant = None
 
+        # Below are status variables
+        self.capacity = self.max_capacity
+        self.assigned_loans = list()
+
     def __str__(self):
-        return f"Facility: id={self.id}, bank={self.bank_id}, ir={self.ir}, cap={self.cap}.\n\tcovenant={self.covenant}"
+        return f"Facility: id={self.id}, bank={self.bank_id}, ir={self.ir}, cap={self.max_capacity}.\n\tcovenant={self.covenant}"
 
     def set_covenant(self, covenant):
         self.covenant = covenant
+
+    def is_loan_legal(self, loan):
+        if loan.amount > self.capacity:
+            return False
+
+        if self.covenant:
+            if loan.state and loan.state in self.covenant.banned_states:
+                return False
+            if loan.likelihood > self.covenant.max_default_likelihood:
+                return False
+
+        return True
+
+    def assign_loan(self, loan):
+        # assign a loan to this facility, which will reduce the capacity
+        self.assigned_loans.append(loan)
+        self.capacity -= loan.amount
+        if self.capacity < 0:
+            # should not happen if algorithm is correct, but still double check
+            raise ValueError(f"Loan {loan} cannot assign to facility {self}")
+        print(f"Assigned loan {loan} to facility {self}")
 
     @staticmethod
     def load_facilities(facilities_file):
@@ -64,7 +88,6 @@ class Facility:
                     pass
                 else:
                     fac = Facility(row[2], row[3], row[1], row[0])
-                    print(fac)
                     facilities[row[2]] = fac
                 count += 1
         return facilities
@@ -74,7 +97,11 @@ class Covenant:
     def __init__(self, fac_id, max_default_likelihood):
         # Since a facility can only associate with one bank, we do not need bank_id here
         self.fac_id = fac_id
-        self.max_default_likelihood = max_default_likelihood
+        if max_default_likelihood.isnumeric():
+            self.max_default_likelihood = float(max_default_likelihood)
+        else:
+            self.max_default_likelihood = sys.float_info.max
+
         self.banned_states = set()      # Will aggregate states into a set
 
     def __str__(self):
@@ -107,7 +134,6 @@ class Covenant:
                         covenants[fac_id] = cov
                         cov.add_banned_state(row[3])
 
-                    print(cov)
                 count += 1
         return covenants
 
@@ -121,10 +147,10 @@ class Covenant:
 class Loan:
     def __init__(self, id, amount, ir, likelihood, state):
         self.id = id
-        self.ir = ir
-        self.amount = amount
+        self.ir = float(ir)
+        self.amount = float(amount)
         self.state = state
-        self.likelihood = likelihood
+        self.likelihood = float(likelihood)
 
     def __str__(self):
         return f"Loan: id={self.id}, amount={self.amount}, ir={self.ir}, likelihood={self.likelihood}, state={self.state}"
@@ -143,11 +169,25 @@ class Loan:
                 else:
                     loan = Loan(row[2], row[1], row[0], row[3], row[4])
                     if loan_processor_func:
-                        print(f'Processing loan {loan} ...')
-                        loan_processor_func(facilities, loan)
+                        loan_processor_func(loan, facilities)
                     else:
                         print(loan)
                 count += 1
+
+
+def assign_loan_to_facility(loan, faciliies):
+    # Iterator the facilities and pickup the legal one with minimum interest
+    min_ir = 1.0
+    min_ir_fac = None
+    for fac_id, fac in faciliies.items():
+        if fac.is_loan_legal(loan):
+            if fac.ir < min_ir:
+                min_ir = fac.ir
+                min_ir_fac = fac
+    if min_ir_fac:
+        min_ir_fac.assign_loan(loan)
+    else:
+        print(f"failed to assign loan {loan} to any facility")
 
 
 def main():
@@ -189,7 +229,9 @@ def main():
     for fac_id, fac in facilities.items():
         print(f"{fac}")
 
-    Loan.process_loans(os.path.join(working_dir, args.loans))
+    Loan.process_loans(os.path.join(working_dir, args.loans),
+                       facilities=facilities,
+                       loan_processor_func=assign_loan_to_facility)
 
 
 if __name__ == '__main__':
