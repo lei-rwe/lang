@@ -85,7 +85,7 @@ class Facility:
     @staticmethod
     def load_facilities(facilities_file):
         # Read bank information file and create a list of Bank objects
-        facilities = dict()
+        facilities = list()
 
         # assume the first row is header
         # Assume the format is: capacity,interest_rate,id,bank_id
@@ -98,9 +98,15 @@ class Facility:
                     pass
                 else:
                     fac = Facility(row[2], row[3], row[1], row[0])
-                    facilities[row[2]] = fac
+                    facilities.append(fac)
                 count += 1
         return facilities
+
+    @staticmethod
+    def sort_facilities(facilities):
+        # This will sort facilities w.r.t the interest rate. So that we can stop at the first legal
+        # facility which will hvae the smallest interest rate
+        facilities.sort(key=lambda fac: fac.ir)
 
 
 class Covenant:
@@ -150,8 +156,10 @@ class Covenant:
     @staticmethod
     def assign_covenants_to_facilities(facilities, covenants):
         for fac_id, cov in covenants.items():
-            if fac_id in facilities:
-                facilities[fac_id].set_covenant(cov)
+            for fac in facilities:
+                if fac_id == fac.id:
+                    fac.set_covenant(cov)
+                    continue
 
 
 class Loan:
@@ -191,17 +199,11 @@ class Loan:
 
 
 def assign_loan_to_facility(loan, faciliies):
-    # Iterator the facilities and pickup the legal one with minimum interest
-    min_ir = 1.0
-    min_ir_fac = None
-    for fac_id, fac in faciliies.items():
+    # Since facilities are sorted w.r.t the interest rate, we can stop at the first match
+    for fac in faciliies:
         if fac.is_loan_legal(loan):
-            if fac.ir < min_ir:
-                min_ir = fac.ir
-                min_ir_fac = fac
-    if min_ir_fac:
-        min_ir_fac.assign_loan(loan)
-        return loan.id, min_ir_fac.id
+            fac.assign_loan(loan)
+            return loan.id, fac.id
     else:
         print(f"failed to assign loan {loan} to any facility")
         return loan.id, ''
@@ -221,8 +223,8 @@ def create_result_files(loan_assignments, facilities, assignment_file, yield_fil
 
         wr.writerow(["facility_id", "expected_yield"])
 
-        for fac_id, fac in facilities.items():
-            wr.writerow([fac_id, round(fac.expected_yields)])
+        for fac in facilities:
+            wr.writerow([fac.id, round(fac.expected_yields)])
 
 
 def main():
@@ -255,17 +257,16 @@ def main():
         working_dir = "."
 
     banks = Bank.load_banks(os.path.join(working_dir, args.banks))
-    print(banks)
 
     facilities = Facility.load_facilities(os.path.join(working_dir, args.facilities))
-    print(facilities)
+    Facility.sort_facilities(facilities)
 
     covenants = Covenant.load_covenants(os.path.join(working_dir, args.covenants))
-    print(covenants)
 
     Covenant.assign_covenants_to_facilities(facilities, covenants)
 
-    for fac_id, fac in facilities.items():
+    print("Facilities with covenants:")
+    for fac in facilities:
         print(f"{fac}")
 
     loan_assignments = Loan.process_loans(os.path.join(working_dir, args.loans),
