@@ -44,9 +44,11 @@ class Facility:
         # Below are status variables
         self.capacity = self.max_capacity
         self.assigned_loans = list()
+        self.expected_yields = 0
 
     def __str__(self):
-        return f"Facility: id={self.id}, bank={self.bank_id}, ir={self.ir}, cap={self.max_capacity}.\n\tcovenant={self.covenant}"
+        return f"Facility: id={self.id}, bank={self.bank_id}, ir={self.ir}, cap={self.max_capacity}, expected_yields={self.expected_yields}." + \
+               f"\n\tcovenant={self.covenant}"
 
     def set_covenant(self, covenant):
         self.covenant = covenant
@@ -70,7 +72,15 @@ class Facility:
         if self.capacity < 0:
             # should not happen if algorithm is correct, but still double check
             raise ValueError(f"Loan {loan} cannot assign to facility {self}")
+        self.calc_yields(loan)
         print(f"Assigned loan {loan} to facility {self}")
+
+    def calc_yields(self, loan):
+        # expected_yield = (1 - default_likelihood) * loan_interest_rate * amount
+        #                  - default_likelihood * amount\
+        #                  - facility_interest_rate * amount
+        e = (1 - loan.likelihood) * loan.ir * loan.amount - loan.likelihood * loan.amount - self.ir * loan.amount
+        self.expected_yields += e
 
     @staticmethod
     def load_facilities(facilities_file):
@@ -159,6 +169,8 @@ class Loan:
     def process_loans(loans_file, facilities=None, loan_processor_func=None):
         # assume the first row is header
         # Assume the format is: interest_rate,amount,id,default_likelihood,state
+        # Return loan_id -> facility_id list for each loan
+        loan_assignments = list()
         with open(loans_file) as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',')
 
@@ -169,10 +181,13 @@ class Loan:
                 else:
                     loan = Loan(row[2], row[1], row[0], row[3], row[4])
                     if loan_processor_func:
-                        loan_processor_func(loan, facilities)
+                        assignment = loan_processor_func(loan, facilities)
+                        loan_assignments.append(assignment)
                     else:
                         print(loan)
                 count += 1
+
+        return loan_assignments
 
 
 def assign_loan_to_facility(loan, faciliies):
@@ -186,8 +201,28 @@ def assign_loan_to_facility(loan, faciliies):
                 min_ir_fac = fac
     if min_ir_fac:
         min_ir_fac.assign_loan(loan)
+        return loan.id, min_ir_fac.id
     else:
         print(f"failed to assign loan {loan} to any facility")
+        return loan.id, ''
+
+
+def create_result_files(loan_assignments, facilities, assignment_file, yield_file):
+    with open(assignment_file, 'w', newline='\n') as fp:
+        wr = csv.writer(fp, quoting=csv.QUOTE_NONE)
+
+        wr.writerow(["loan_id", "facility_id"])
+
+        for assignment in loan_assignments:
+            wr.writerow(assignment)
+
+    with open(yield_file, 'w', newline='\n') as fp:
+        wr = csv.writer(fp, quoting=csv.QUOTE_NONE)
+
+        wr.writerow(["facility_id", "expected_yield"])
+
+        for fac_id, fac in facilities.items():
+            wr.writerow([fac_id, round(fac.expected_yields)])
 
 
 def main():
@@ -195,13 +230,17 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter,
         description="Assign loans to facilities\n" +
                     "\nFor example:" +
-                    "\n    python {} ".format(sys.argv[0])
+                    "\n    python {} -w small -b banks.csv -f facilities.csv -c covenants.csv -l loans.csv -a a.csv -y y.csv".format(sys.argv[0])
     )
 
     ap.add_argument("-b", "--banks", required=True, type=str, help="Bank file")
     ap.add_argument("-f", "--facilities", required=True, type=str, help="Facilities file")
     ap.add_argument("-c", "--covenants", required=True, type=str, help="Covenants file")
     ap.add_argument("-l", "--loans", required=True, type=str, help="Loans file")
+
+    ap.add_argument("-a", "--assignments", required=True, type=str, help="Assignments file")
+    ap.add_argument("-y", "--yields", required=True, type=str, help="yields file")
+
     ap.add_argument("-w", "--setwd", type=str, help="Directory which holds all the generated data files. Default to current directory")
     ap.add_argument("-z", "--debug", action='store_true', help="If specified, program will involve pdb.set_trace() at the beginning")
 
@@ -229,9 +268,11 @@ def main():
     for fac_id, fac in facilities.items():
         print(f"{fac}")
 
-    Loan.process_loans(os.path.join(working_dir, args.loans),
-                       facilities=facilities,
-                       loan_processor_func=assign_loan_to_facility)
+    loan_assignments = Loan.process_loans(os.path.join(working_dir, args.loans),
+                                          facilities=facilities,
+                                          loan_processor_func=assign_loan_to_facility)
+
+    create_result_files(loan_assignments, facilities, args.assignments, args.yields)
 
 
 if __name__ == '__main__':
