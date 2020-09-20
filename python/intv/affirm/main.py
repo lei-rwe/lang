@@ -40,9 +40,13 @@ class Facility:
         self.bank_id = bank_id
         self.ir = ir
         self.cap = capacity
+        self.covenant = None
 
     def __str__(self):
-        return f"Facility: id={self.id}, bank={self.bank_id}, ir={self.ir}, cap={self.cap}"
+        return f"Facility: id={self.id}, bank={self.bank_id}, ir={self.ir}, cap={self.cap}.\n\tcovenant={self.covenant}"
+
+    def set_covenant(self, covenant):
+        self.covenant = covenant
 
     @staticmethod
     def load_facilities(facilities_file):
@@ -107,6 +111,44 @@ class Covenant:
                 count += 1
         return covenants
 
+    @staticmethod
+    def assign_covenants_to_facilities(facilities, covenants):
+        for fac_id, cov in covenants.items():
+            if fac_id in facilities:
+                facilities[fac_id].set_covenant(cov)
+
+
+class Loan:
+    def __init__(self, id, amount, ir, likelihood, state):
+        self.id = id
+        self.ir = ir
+        self.amount = amount
+        self.state = state
+        self.likelihood = likelihood
+
+    def __str__(self):
+        return f"Loan: id={self.id}, amount={self.amount}, ir={self.ir}, likelihood={self.likelihood}, state={self.state}"
+
+    @staticmethod
+    def process_loans(loans_file, facilities=None, loan_processor_func=None):
+        # assume the first row is header
+        # Assume the format is: interest_rate,amount,id,default_likelihood,state
+        with open(loans_file) as csvfile:
+            csvreader = csv.reader(csvfile, delimiter=',')
+
+            count = 0
+            for row in csvreader:
+                if count == 0:
+                    pass
+                else:
+                    loan = Loan(row[2], row[1], row[0], row[3], row[4])
+                    if loan_processor_func:
+                        print(f'Processing loan {loan} ...')
+                        loan_processor_func(facilities, loan)
+                    else:
+                        print(loan)
+                count += 1
+
 
 def main():
     ap = argparse.ArgumentParser(
@@ -141,6 +183,13 @@ def main():
 
     covenants = Covenant.load_covenants(os.path.join(working_dir, args.covenants))
     print(covenants)
+
+    Covenant.assign_covenants_to_facilities(facilities, covenants)
+
+    for fac_id, fac in facilities.items():
+        print(f"{fac}")
+
+    Loan.process_loans(os.path.join(working_dir, args.loans))
 
 
 if __name__ == '__main__':
