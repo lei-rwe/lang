@@ -1,3 +1,14 @@
+The source code is committed to github:
+    https://github.com/lzhang938/lang/tree/master/python/intv/affirm
+
+Running
+    python main.py -h
+will print the helps.
+
+Some example commands to run is:
+    python main.py -w small  -b banks.csv -f facilities.csv -c covenants.csv -l loans.csv -a small/assignments.csv -y small/yields.csv > small/outs.log
+    python main.py -w large  -b banks.csv -f facilities.csv -c covenants.csv -l loans.csv -a large/assignments.csv -y large/yields.csv > large/outs.log
+
 1. How long did you spend working on the problem? What did you find to be the most
 difficult part?
 
