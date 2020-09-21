@@ -4,6 +4,14 @@ import sys
 import csv
 
 
+def is_float(s):
+    try:
+        f = float(s)
+        return True, f
+    except ValueError:
+        return False, None
+
+
 class Bank:
     def __init__(self, id, name):
         self.id = id
@@ -55,12 +63,16 @@ class Facility:
 
     def is_loan_legal(self, loan):
         if loan.amount > self.capacity:
+            print(f"Facility {self} cannot pick up loan {loan} due to capacity limit")
             return False
 
         if self.covenant:
             if loan.state and loan.state in self.covenant.banned_states:
+                print(f"Facility {self} cannot pick up loan {loan} due to state restriction")
                 return False
+
             if loan.likelihood > self.covenant.max_default_likelihood:
+                print(f"Facility {self} cannot pick up loan {loan} due to covenant max default limit")
                 return False
 
         return True
@@ -113,10 +125,9 @@ class Covenant:
     def __init__(self, fac_id, max_default_likelihood):
         # Since a facility can only associate with one bank, we do not need bank_id here
         self.fac_id = fac_id
-        if max_default_likelihood.isnumeric():
-            self.max_default_likelihood = float(max_default_likelihood)
-        else:
-            self.max_default_likelihood = sys.float_info.max
+
+        a, b = is_float(max_default_likelihood)
+        self.max_default_likelihood = b if a else sys.float_info.max
 
         self.banned_states = set()      # Will aggregate states into a set
 
@@ -124,11 +135,18 @@ class Covenant:
         return f"Covenant: fac_id={self.fac_id}, max_default_likelihood={self.max_default_likelihood}, banned_states={self.banned_states}"
 
     def add_banned_state(self, state):
-        self.banned_states.add(state)
+        if type(state) is set:
+            self.banned_states.update(state)
+        else:
+            self.banned_states.add(state)
 
     @staticmethod
     def load_covenants(covenants_file):
-        # Read bank information file and create a list of Covenant objects
+        # Read covenants information file and create a list of Covenant objects
+        # Note that based on the document, facility id may be missing. In this case the covenant will be considered for
+        # all the facilities associated with the bank
+
+        bank_covenants = dict()
         covenants = dict()
 
         # assume the first row is header
@@ -139,27 +157,74 @@ class Covenant:
             count = 0
             for row in csvreader:
                 if count == 0:
-                    pass
+                    count += 1
+                    continue
                 else:
+                    count += 1
                     fac_id = row[0]
-                    if fac_id in covenants:
-                        cov = covenants[fac_id]
-                        cov.add_banned_state(row[3])
-                    else:
-                        cov = Covenant(fac_id, row[1])
-                        covenants[fac_id] = cov
-                        cov.add_banned_state(row[3])
+                    if len(fac_id) == 0:    # covenant is for the bank
+                        bank_id = row[2]
+                        if len(bank_id) == 0:
+                            # both facility id and bank id are empty. Do nothing
+                            count += 1
+                            continue
 
-                count += 1
-        return covenants
+                        if bank_id in bank_covenants:
+                            cov = bank_covenants[bank_id]
+                            cov.add_banned_state(row[3])
+                            dft_likeli = row[1]
+                            if len(dft_likeli) > 0:
+                                dft_likeli = float(dft_likeli)
+                                if cov.max_default_likelihood > dft_likeli:
+                                    cov.max_default_likelihood = dft_likeli
+                        else:
+                            cov = Covenant(f"bank_id: {bank_id}", row[1])
+                            cov.add_banned_state(row[3])
+                            bank_covenants[bank_id] = cov
+                        # endif
+                    else:
+                        if fac_id in covenants:
+                            cov = covenants[fac_id]
+                            cov.add_banned_state(row[3])
+                            dft_likeli = row[1]
+                            if len(dft_likeli) > 0:
+                                dft_likeli = float(dft_likeli)
+                                if cov.max_default_likelihood > dft_likeli:
+                                    cov.max_default_likelihood = dft_likeli
+                        else:
+                            cov = Covenant(fac_id, row[1])
+                            cov.add_banned_state(row[3])
+                            covenants[fac_id] = cov
+                        # endif
+                    # endif
+                # endif
+            # end for
+        # end with
+
+        return covenants, bank_covenants
 
     @staticmethod
-    def assign_covenants_to_facilities(facilities, covenants):
-        for fac_id, cov in covenants.items():
-            for fac in facilities:
-                if fac_id == fac.id:
-                    fac.set_covenant(cov)
-                    continue
+    def assign_covenants_to_facilities(facilities, covenants, bank_covenants):
+        for fac in facilities:
+            if fac.id in covenants:
+                cov = covenants[fac.id]
+                fac.set_covenant(cov)
+
+            # Add the restrictions for the whole bank
+            if bank_covenants and fac.bank_id in bank_covenants:
+                bank_cov = bank_covenants[fac.bank_id]
+                if fac.covenant:
+                    cov = fac.covenant
+                    cov.add_banned_state(bank_cov.banned_states)
+
+                    # If bank has small default likelihood, use it
+                    dft_likeli = bank_cov.max_default_likelihood
+                    if cov.max_default_likelihood > dft_likeli:
+                        cov.max_default_likelihood = dft_likeli
+                    print(f'Facility {fac} is updated with bank covenant {bank_cov}')
+                else:
+                    fac.set_covenant(bank_cov)
+                    print(f'Facility {fac} is set to bank covenant {bank_cov}')
 
 
 class Loan:
@@ -261,9 +326,9 @@ def main():
     facilities = Facility.load_facilities(os.path.join(working_dir, args.facilities))
     Facility.sort_facilities(facilities)
 
-    covenants = Covenant.load_covenants(os.path.join(working_dir, args.covenants))
+    covenants, bank_cov = Covenant.load_covenants(os.path.join(working_dir, args.covenants))
 
-    Covenant.assign_covenants_to_facilities(facilities, covenants)
+    Covenant.assign_covenants_to_facilities(facilities, covenants, bank_cov)
 
     print("Facilities with covenants:")
     for fac in facilities:
