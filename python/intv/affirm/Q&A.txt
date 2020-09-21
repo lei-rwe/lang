@@ -1,0 +1,53 @@
+1. How long did you spend working on the problem? What did you find to be the most
+difficult part?
+
+A: The first working solution for the "small" data set took me about 1.5 hours, including
+the time to read the document and understand the problem.
+The longest time was taken to read the data and solutions, together with the document, to
+understand the logics behind, and come out with the flow to implement.
+
+2. How would you modify your data model or code to account for an eventual introduction
+of new, as-of-yet unknown types of covenants, beyond just maximum default likelihood
+and state restrictions?
+
+A: Based on OOP, a facility should HAVE one or more covenants (has-a relation). Hence,
+the facility object should contain a method to verify if a given loan is "legal" to pick up.
+To make it more sophisticated, we can extend Covenant class to have different types of
+covenants, which will be checked by the facility object one by one.
+
+3. How would you architect your solution as a production service wherein new facilities can
+be introduced at arbitrary points in time. Assume these facilities become available by the
+finance team emailing your team and describing the addition with a new set of CSVs.
+
+A: I would create a service API to allow the financial team to post a request to add new
+facilities. In production, this new facilities should be saved in database.
+Secuirty policy needs to be implemented for the financial teams to over-see the permissions
+to do so.
+
+4. Your solution most likely simulates the streaming process by directly calling a method in
+your code to process the loans inside of a for loop. What would a REST API look like for
+this same service? Stakeholders using the API will need, at a minimum, to be able to
+request a loan be assigned to a facility, and read the funding status of a loan, as well as
+query the capacities remaining in facilities.
+
+A: This can be done by using a network streaming. I used to use websocket when I was working
+at RBC, to listen to a port which other parties will stream in the loans.
+
+5. How might you improve your assignment algorithm if you were permitted to assign loans
+in batch rather than streaming? We are not looking for code here, but pseudo code or
+description of a revised algorithm appreciated.
+
+A: If loans are coming in batches, it opens an opportunity to optimize the solution, to maximize
+the yields. This can be done using the Graph Theory's matching algorithm, which is essentially
+a linear programming problem. The complexity is polynomial.
+
+Basically, we can construct a bipartite graph, with one part contains the loans, the other part
+contains the facilities. With all the covenants limitation, we solve the optimal solution for
+the matching.
+
+6. Discuss your solution’s runtime complexity.
+
+A: For a given loan, the time to find the facility is linear of the number of facilities. I did
+an optimization by sorting the facilities with there interest rates, so that we do not need to
+go over all the facilites every time. Instead, we can stop at the very first "legal" facility,
+which is guaranteed to have the smallest possible interest rate.
